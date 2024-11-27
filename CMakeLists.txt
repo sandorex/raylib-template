@@ -7,6 +7,17 @@ project(hot-reload-raylib VERSION 0.1
                           LANGUAGES CXX)
 
 option(HOT_RELOAD "Build binary with hot-reload (do not use for full release)" ON)
+if(EMSCRIPTEN)
+    # hot reload is meant for native builds only
+    set(HOT_RELOAD OFF CACHE BOOL "" FORCE)
+
+    # build raylib for web
+    set(PLATFORM Web CACHE STRING "" FORCE)
+
+    # some extras to allow raylib to work properly on web
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_GLFW=3 -s ASSERTIONS=1 -s WASM=1 -s ASYNCIFY -s GL_ENABLE_GET_PROC_ADDRESS=1")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
