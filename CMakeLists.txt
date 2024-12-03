@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 
 project(hot-reload-raylib VERSION 0.1
                           DESCRIPTION "Hot reload enabled c++17 raylib template"
-                          LANGUAGES CXX)
+                          LANGUAGES CXX C)
 
 option(HOT_RELOAD "Build binary with hot-reload (do not use for full release)" ON)
 if(EMSCRIPTEN)
@@ -46,14 +46,18 @@ FetchContent_Declare(
     GIT_TAG        "5.5"
     GIT_PROGRESS   TRUE
 )
-FetchContent_MakeAvailable(raylib)
+# FetchContent_MakeAvailable(raylib)
 
 set(PROJ_NAME "demo")
 set(SRC src/main.cpp)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON
+    CMAKE_SHARED_LIBRARY_PREFIX ""
+    CMAKE_STATIC_LIBRARY_PREFIX "")
+
 add_library(common INTERFACE)
 target_compile_features(common INTERFACE cxx_std_17)
-target_link_libraries(common INTERFACE raylib)
+# target_link_libraries(common INTERFACE raylib)
 target_include_directories(common SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 if(HOT_RELOAD)
@@ -66,18 +70,25 @@ if(HOT_RELOAD)
     )
     FetchContent_MakeAvailable(dylib)
 
-    add_library(lib${PROJ_NAME} SHARED ${SRC})
-    target_link_libraries(lib${PROJ_NAME} PUBLIC common)
-    set_target_properties(lib${PROJ_NAME}
-        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON
-        PREFIX "")
-    target_compile_definitions(lib${PROJ_NAME} PUBLIC HR_LIB)
+    # add_library(lib${PROJ_NAME} SHARED ${SRC})
+    # target_link_libraries(lib${PROJ_NAME} PUBLIC common)
+    # # set_target_properties(lib${PROJ_NAME}
+    # #     PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON
+    # #     PREFIX "")
+    # target_compile_definitions(lib${PROJ_NAME} PUBLIC HR_LIB)
 
-    add_executable(${PROJ_NAME} src/main.cpp)
+    add_library(module_test SHARED src/test_module.c)
+
+    target_link_libraries(module_test PUBLIC common)
+    # set_target_properties(module_test
+    #     PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON
+    #     PREFIX "")
+
+    add_executable(${PROJ_NAME} src/main.cpp src/module_loader.c)
     target_link_libraries(${PROJ_NAME}
         PUBLIC common
         PUBLIC dylib)
-    target_compile_definitions(${PROJ_NAME} PRIVATE HR_EXE HR_LIB_NAME="${PROJ_NAME}")
+    # target_compile_definitions(${PROJ_NAME} PRIVATE HR_EXE HR_LIB_NAME="${PROJ_NAME}")
 else()
     add_executable(${PROJ_NAME} ${SRC})
     target_link_libraries(${PROJ_NAME} PUBLIC common)
